@@ -63,19 +63,6 @@ come_out:
 	log.Info("shooter done", "shooterStats", s.Stats)
 }
 
-// Odds represents odds for a bet. The numbers are net / independent of amount
-// wagered.
-type Odds struct {
-	Win  uint
-	Loss uint
-}
-
-type Bet struct {
-	Wager uint
-	Pays  Odds
-	// TODO: add true odds?
-}
-
 type DiceRoll struct {
 	Value uint
 	Hard  bool
