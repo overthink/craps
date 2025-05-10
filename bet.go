@@ -18,31 +18,6 @@ func NewOdds(win, loss uint) Odds {
 	}
 }
 
-type BetOld struct {
-	Amount float64
-	Pays   Odds
-	// TODO: add true odds?
-}
-
-func NewBetOld(amount float64, win, loss uint) BetOld {
-	return BetOld{
-		Amount: amount,
-		Pays:   NewOdds(win, loss),
-	}
-}
-
-func (b *BetOld) Set(amount float64) {
-	b.Amount = amount
-}
-
-func (b *BetOld) Clear() {
-	b.Amount = 0
-}
-
-func (b *BetOld) Payout() float64 {
-	return (float64(b.Pays.Win) / float64(b.Pays.Loss) * b.Amount) + b.Amount
-}
-
 type BetStatus int
 
 const (

@@ -8,7 +8,7 @@ import (
 
 const delta = 0.005
 
-func TestBet(t *testing.T) {
+func TestBaseBet(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		amount  float64
@@ -70,12 +70,18 @@ func TestBet(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			if tt.isError {
 				require.Panics(t, func() {
-					NewBetOld(tt.amount, tt.win, tt.loss)
+					_ = BaseBet{
+						amount: tt.amount,
+						odds:   NewOdds(tt.win, tt.loss),
+					}
 				})
 				return
 			}
-			b := NewBetOld(tt.amount, tt.win, tt.loss)
-			require.InDelta(t, tt.payout, b.Payout(), delta)
+			b := BaseBet{
+				amount: tt.amount,
+				odds:   NewOdds(tt.win, tt.loss),
+			}
+			require.InDelta(t, tt.payout, b.Return(), delta)
 		})
 	}
 }
