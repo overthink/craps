@@ -4,6 +4,14 @@ import (
 	"log/slog"
 )
 
+type Strategy struct {
+	//
+}
+
+func (s *Strategy) Bet(shooter *Shooter) {
+	//
+}
+
 type ShooterStats struct {
 	Rounds uint
 	Rolls  uint
@@ -11,73 +19,72 @@ type ShooterStats struct {
 	Craps  uint
 }
 
-// Shooter represents a player in craps that is rolling. It starts fresh on a
-// come out roll, and ends when they seven out.
-// TODO: we could also call this "Hand", thinking on it
+// Shooter encapsulates all the game state for a single shooter. It starts fresh
+// on a come out roll, and ends when they seven out.  You could probably also
+// call this "Hand" but it is more understandable to me as Shooter.
 type Shooter struct {
-	ID    uint
-	Point uint // 0 if unset
-	Stats ShooterStats
-	Roll  func() DiceRoll
-	// lucky shooter info could be here too
+	ID       uint
+	log      *slog.Logger
+	strategy Strategy
+	bankroll float64
+	point    uint // 0 if unset
+	stats    ShooterStats
+	roller   Roller
+	bets     []Bet
+}
+
+func (s *Shooter) rollDice() DiceRoll {
+	roll := s.roller()
+	s.log.Info("roll", "roll", roll)
+	s.stats.Rolls++
+	return roll
 }
 
 func (s *Shooter) Run() {
-	log := slog.With("shooterId", s.ID)
-	log.Info("shooter start")
+	s.log.Info("-------- shooter start")
+
+	// make bets
+	// roll
+	// settle bets (with current roll and prev game state)
+	// update game state
+	// repeat
+
 come_out:
 	for {
-		log.Info("come out roll")
-		s.Stats.Rounds++
-		roll := s.Roll()
-		s.Stats.Rolls++
-		log.Info("roll", "roll", roll)
+		s.log.Info("-- come out roll")
+		s.stats.Rounds++
+		s.strategy.Bet(s)
+		roll := s.rollDice()
 		if roll.IsPoint() {
-			log.Info("set point", "roll", roll)
-			s.Point = roll.Value
+			s.point = roll.Value
+			s.log.Info("set point", "point", s.point)
 			break
 		}
 		if roll.IsPass() {
-			s.Stats.Passes++
+			s.log.Info("natural/pass")
+			s.stats.Passes++
 		}
 		if roll.IsCraps() {
-			s.Stats.Craps++
+			s.log.Info("craps")
+			s.stats.Craps++
 		}
 	}
 
 	for {
-		roll := s.Roll()
-		s.Stats.Rolls++
-		log.Info("roll", "roll", roll)
-		if roll.Value == s.Point {
-			log.Info("point hit", "roll", roll)
-			s.Stats.Passes++
-			s.Point = 0
+		s.strategy.Bet(s)
+		roll := s.rollDice()
+		if roll.Value == s.point {
+			s.log.Info("point hit", "point", roll.Value)
+			s.stats.Passes++
+			s.point = 0
 			goto come_out
 		}
 		if roll.Value == 7 {
-			log.Info("seven out")
+			s.log.Info("seven out")
 			break
 		}
 	}
-	log.Info("shooter done", "shooterStats", s.Stats)
-}
-
-type DiceRoll struct {
-	Value uint
-	Hard  bool
-}
-
-func (r DiceRoll) IsPoint() bool {
-	return r.Value == 4 || r.Value == 5 || r.Value == 6 || r.Value == 8 || r.Value == 9 || r.Value == 10
-}
-
-func (r DiceRoll) IsPass() bool {
-	return r.Value == 7 || r.Value == 11
-}
-
-func (r DiceRoll) IsCraps() bool {
-	return r.Value == 2 || r.Value == 3 || r.Value == 12
+	s.log.Info("shooter done", "shooterStats", s.stats)
 }
 
 type Simulation struct {
@@ -99,18 +106,22 @@ func (s *Simulation) Roll() DiceRoll {
 	}
 }
 
-func (s *Simulation) NewShooter() Shooter {
+func (s *Simulation) NewShooter(strategy Strategy, bankroll float64) Shooter {
 	s.ShooterCount++
 	return Shooter{
-		ID:   s.ShooterCount,
-		Roll: s.Roll,
+		ID:       s.ShooterCount,
+		log:      slog.With("shooterId", s.ShooterCount),
+		strategy: strategy,
+		roller:   s.Roll,
+		bankroll: bankroll,
 	}
 }
 
 func main() {
 	sim := NewSimulation(9671111)
 	for range 3 {
-		shooter := sim.NewShooter()
+		strategy := Strategy{}
+		shooter := sim.NewShooter(strategy, 440)
 		shooter.Run()
 	}
 	slog.Info("exiting", "shooterCount", sim.ShooterCount)

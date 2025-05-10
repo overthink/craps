@@ -9,6 +9,7 @@ import (
 const delta = 0.005
 
 func TestBet(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		amount  float64
 		win     uint
@@ -67,12 +68,13 @@ func TestBet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run("", func(t *testing.T) {
-			b, err := NewBet(tt.amount, tt.win, tt.loss)
 			if tt.isError {
-				require.Error(t, err)
+				require.Panics(t, func() {
+					NewBetOld(tt.amount, tt.win, tt.loss)
+				})
 				return
 			}
-			require.NoError(t, err)
+			b := NewBetOld(tt.amount, tt.win, tt.loss)
 			require.InDelta(t, tt.payout, b.Payout(), delta)
 		})
 	}
