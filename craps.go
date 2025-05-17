@@ -1,15 +1,27 @@
 package main
 
 import (
+	"errors"
 	"log/slog"
 )
 
-type Strategy struct {
-	//
+const MAX_ROUNDS = 1000
+
+type Strategy interface {
+	PlaceBets(shooter *Shooter) error
 }
 
-func (s *Strategy) Bet(shooter *Shooter) {
-	//
+type testStrategy struct{}
+
+func (s *testStrategy) PlaceBets(shooter *Shooter) error {
+	if shooter.bankroll < 5 {
+		return errors.New("not enough money")
+	}
+	if !shooter.IsComeOut() {
+		return nil
+	}
+	shooter.bets = append(shooter.bets, NewPassLineBet(5))
+	return nil
 }
 
 type ShooterStats struct {
@@ -27,10 +39,14 @@ type Shooter struct {
 	log      *slog.Logger
 	strategy Strategy
 	bankroll float64
-	point    uint // 0 if unset
+	point    uint // 0 means not set
 	stats    ShooterStats
 	roller   Roller
 	bets     []Bet
+}
+
+func (s *Shooter) IsComeOut() bool {
+	return s.point == 0
 }
 
 func (s *Shooter) rollDice() DiceRoll {
@@ -40,7 +56,7 @@ func (s *Shooter) rollDice() DiceRoll {
 	return roll
 }
 
-func (s *Shooter) Run() {
+func (s *Shooter) Run() error {
 	s.log.Info("-------- shooter start")
 
 	// make bets
@@ -53,7 +69,9 @@ come_out:
 	for {
 		s.log.Info("-- come out roll")
 		s.stats.Rounds++
-		s.strategy.Bet(s)
+		if err := s.strategy.PlaceBets(s); err != nil {
+			return err
+		}
 		roll := s.rollDice()
 		if roll.IsPoint() {
 			s.point = roll.Value
@@ -71,7 +89,9 @@ come_out:
 	}
 
 	for {
-		s.strategy.Bet(s)
+		if err := s.strategy.PlaceBets(s); err != nil {
+			return err
+		}
 		roll := s.rollDice()
 		if roll.Value == s.point {
 			s.log.Info("point hit", "point", roll.Value)
@@ -84,7 +104,8 @@ come_out:
 			break
 		}
 	}
-	s.log.Info("shooter done", "shooterStats", s.stats)
+	s.log.Info("shooter done", "bankroll", s.bankroll, "shooterStats", s.stats)
+	return nil
 }
 
 type Simulation struct {
@@ -119,10 +140,19 @@ func (s *Simulation) NewShooter(strategy Strategy, bankroll float64) Shooter {
 
 func main() {
 	sim := NewSimulation(9671111)
-	for range 3 {
-		strategy := Strategy{}
+	for range 1 {
+		strategy := &testStrategy{}
 		shooter := sim.NewShooter(strategy, 440)
-		shooter.Run()
+		for i := range MAX_ROUNDS {
+			if err := shooter.Run(); err != nil {
+				slog.Info("shooter error", "error", err)
+				break
+			}
+			if i == MAX_ROUNDS-1 {
+				// Arguably an error, but a very conservative strategy will hit this
+				slog.Info("max rounds reached")
+			}
+		}
 	}
 	slog.Info("exiting", "shooterCount", sim.ShooterCount)
 }
