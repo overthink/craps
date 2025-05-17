@@ -5,15 +5,19 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
 	"strings"
+	"sync"
 
 	"log/slog"
 
 	"github.com/spf13/cobra"
 )
 
-const MAX_ROUNDS = 1000
+// DEFAULT_ROLLS is the default maximum number of rolls per trial.
+// A trial ends once this many rolls have been seen at the end of the current shooter.
+const DEFAULT_ROLLS = 1000
 
 type Strategy interface {
 	PlaceBets(shooter *Shooter) error
@@ -40,8 +44,7 @@ type ShooterStats struct {
 }
 
 // Shooter encapsulates all the game state for a single shooter. It starts fresh
-// on a come out roll, and ends when they seven out.  You could probably also
-// call this "Hand" but it is more understandable to me as Shooter.
+// on a come out roll, and ends when they seven out.
 type Shooter struct {
 	ID       uint
 	log      *slog.Logger
@@ -116,33 +119,14 @@ come_out:
 	return nil
 }
 
-type Simulation struct {
-	ShooterCount uint
-	prng         PRNG
-}
-
-func NewSimulation(seed int64) *Simulation {
-	return &Simulation{
-		prng: NewPRNG(seed),
-	}
-}
-
-func (s *Simulation) Roll() DiceRoll {
-	a, b := s.prng.Roll2()
-	return DiceRoll{
-		Value: uint(a + b),
-		Hard:  a == b,
-	}
-}
-
-func (s *Simulation) NewShooter(strategy Strategy, bankroll float64) Shooter {
-	s.ShooterCount++
-	return Shooter{
-		ID:       s.ShooterCount,
-		log:      slog.With("shooterId", s.ShooterCount),
-		strategy: strategy,
-		roller:   s.Roll,
-		bankroll: bankroll,
+// NewRoller returns a dice-roller function seeded from 'seed'.
+// Each call to the returned Roller yields a reproducible pair of d6 rolls.
+func NewRoller(seed int64) Roller {
+	r := rand.New(rand.NewSource(seed))
+	return func() DiceRoll {
+		a := r.Intn(6) + 1
+		b := r.Intn(6) + 1
+		return DiceRoll{Value: uint(a + b), Hard: a == b}
 	}
 }
 
@@ -152,8 +136,10 @@ type Config struct {
 	Bankroll      float64
 	Seed          int64
 	StrategyNames []string
-	Out           string
-	Quiet         bool
+	// Rolls is the maximum number of rolls per trial.
+	Rolls int
+	Out   string
+	Quiet bool
 }
 
 func run(cfg Config) error {
@@ -192,19 +178,59 @@ func run(cfg Config) error {
 		return fmt.Errorf("failed to write header: %w", err)
 	}
 
-	for t := range cfg.Trials {
-		for idx, strat := range strats {
-			sim := NewSimulation(cfg.Seed + int64(t))
-			shooter := sim.NewShooter(strat, cfg.Bankroll)
-			for range MAX_ROUNDS {
-				if err := shooter.Run(); err != nil {
-					break
+	type result struct {
+		strategy string
+		profit   float64
+	}
+
+	resultsCh := make(chan result, cfg.Trials*len(strats))
+	var wg sync.WaitGroup
+
+	for trialIdx := range cfg.Trials {
+		wg.Add(1)
+		trialSeed := cfg.Seed + int64(trialIdx)
+
+		go func() {
+			defer wg.Done()
+
+			for idx, strat := range strats {
+				roller := NewRoller(trialSeed)
+				totalRolls := 0
+				finalBank := cfg.Bankroll
+
+				for {
+					shooter := Shooter{
+						ID:       uint(idx),
+						log:      slog.With("trial", trialIdx, "shooter", idx),
+						strategy: strat,
+						roller:   roller,
+						bankroll: finalBank,
+					}
+					if err := shooter.Run(); err != nil {
+						finalBank = shooter.bankroll
+						break
+					}
+					totalRolls += int(shooter.stats.Rolls)
+					finalBank = shooter.bankroll
+					if totalRolls >= cfg.Rolls {
+						break
+					}
 				}
+
+				net := finalBank - cfg.Bankroll
+				resultsCh <- result{strategy: names[idx], profit: net}
 			}
-			net := shooter.bankroll - cfg.Bankroll
-			if err := writer.Write([]string{names[idx], fmt.Sprintf("%.2f", net)}); err != nil {
-				return fmt.Errorf("failed to write record: %w", err)
-			}
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(resultsCh)
+	}()
+
+	for r := range resultsCh {
+		if err := writer.Write([]string{r.strategy, fmt.Sprintf("%.2f", r.profit)}); err != nil {
+			return fmt.Errorf("failed to write record: %w", err)
 		}
 	}
 
@@ -228,6 +254,7 @@ func main() {
 	cmd.Flags().Float64Var(&cfg.Bankroll, "bankroll", 440, "starting bankroll for shooters")
 	cmd.Flags().Int64Var(&cfg.Seed, "seed", 9671111, "base seed; trial seeds will be seed+trial")
 	cmd.Flags().StringSliceVar(&cfg.StrategyNames, "strategies", []string{"test"}, "comma-separated list of strategies to test")
+	cmd.Flags().IntVar(&cfg.Rolls, "rolls", DEFAULT_ROLLS, "maximum number of rolls per trial (trial stops after this many rolls once the shooter sevens out)")
 	cmd.Flags().StringVar(&cfg.Out, "out", "", "output CSV file path (default stdout)")
 	cmd.Flags().BoolVar(&cfg.Quiet, "quiet", false, "suppress logging output")
 
