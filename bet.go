@@ -1,4 +1,4 @@
-package main
+package craps
 
 // Odds represents odds for a bet. The numbers are net / independent of amount
 // wagered.

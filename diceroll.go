@@ -1,4 +1,4 @@
-package main
+package craps
 
 type DiceRoll struct {
 	Value uint

@@ -1,4 +1,4 @@
-package main
+package craps
 
 // TableStats holds pass/craps/roll statistics at the table level.
 type TableStats struct {

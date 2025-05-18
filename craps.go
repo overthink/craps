@@ -1,18 +1,15 @@
-package main
+package craps
 
 import (
 	"encoding/csv"
 	"errors"
 	"fmt"
-	"io"
 	"math/rand"
 	"os"
 	"strings"
 	"sync"
 
 	"log/slog"
-
-	"github.com/spf13/cobra"
 )
 
 // DEFAULT_ROLLS is the default maximum number of rolls per trial.
@@ -23,16 +20,16 @@ type Strategy interface {
 	PlaceBets(shooter *Shooter) error
 }
 
-type testStrategy struct{}
+type PassLineStrategy struct{}
 
-func (s *testStrategy) PlaceBets(shooter *Shooter) error {
-	if shooter.bankroll < 5 {
+func (s *PassLineStrategy) PlaceBets(shooter *Shooter) error {
+	if shooter.Bankroll < 5 {
 		return errors.New("not enough money")
 	}
 	if !shooter.IsComeOut() {
 		return nil
 	}
-	shooter.bets = append(shooter.bets, NewPassLineBet(5))
+	shooter.Bets = append(shooter.Bets, NewPassLineBet(5))
 	return nil
 }
 
@@ -47,28 +44,28 @@ type ShooterStats struct {
 // on a come out roll, and ends when they seven out.
 type Shooter struct {
 	ID       uint
-	log      *slog.Logger
-	strategy Strategy
-	bankroll float64
-	point    uint // 0 means not set
-	stats    ShooterStats
-	roller   Roller
-	bets     []Bet
+	Log      *slog.Logger
+	Strategy Strategy
+	Bankroll float64
+	Point    uint // 0 means not set
+	Stats    ShooterStats
+	Roller   Roller
+	Bets     []Bet
 }
 
 func (s *Shooter) IsComeOut() bool {
-	return s.point == 0
+	return s.Point == 0
 }
 
 func (s *Shooter) rollDice() DiceRoll {
-	roll := s.roller()
-	s.log.Info("roll", "roll", roll)
-	s.stats.Rolls++
+	roll := s.Roller()
+	s.Log.Info("roll", "roll", roll)
+	s.Stats.Rolls++
 	return roll
 }
 
 func (s *Shooter) Run() error {
-	s.log.Info("-------- shooter start")
+	s.Log.Info("-------- shooter start")
 
 	// make bets
 	// roll
@@ -78,44 +75,44 @@ func (s *Shooter) Run() error {
 
 come_out:
 	for {
-		s.log.Info("-- come out roll")
-		s.stats.Rounds++
-		if err := s.strategy.PlaceBets(s); err != nil {
+		s.Log.Info("-- come out roll")
+		s.Stats.Rounds++
+		if err := s.Strategy.PlaceBets(s); err != nil {
 			return err
 		}
 		roll := s.rollDice()
 		if roll.IsPoint() {
-			s.point = roll.Value
-			s.log.Info("set point", "point", s.point)
+			s.Point = roll.Value
+			s.Log.Info("set point", "point", s.Point)
 			break
 		}
 		if roll.IsPass() {
-			s.log.Info("natural/pass")
-			s.stats.Passes++
+			s.Log.Info("natural/pass")
+			s.Stats.Passes++
 		}
 		if roll.IsCraps() {
-			s.log.Info("craps")
-			s.stats.Craps++
+			s.Log.Info("craps")
+			s.Stats.Craps++
 		}
 	}
 
 	for {
-		if err := s.strategy.PlaceBets(s); err != nil {
+		if err := s.Strategy.PlaceBets(s); err != nil {
 			return err
 		}
 		roll := s.rollDice()
-		if roll.Value == s.point {
-			s.log.Info("point hit", "point", roll.Value)
-			s.stats.Passes++
-			s.point = 0
+		if roll.Value == s.Point {
+			s.Log.Info("point hit", "point", roll.Value)
+			s.Stats.Passes++
+			s.Point = 0
 			goto come_out
 		}
 		if roll.Value == 7 {
-			s.log.Info("seven out")
+			s.Log.Info("seven out")
 			break
 		}
 	}
-	s.log.Info("shooter done", "bankroll", s.bankroll, "shooterStats", s.stats)
+	s.Log.Info("shooter done", "bankroll", s.Bankroll, "shooterStats", s.Stats)
 	return nil
 }
 
@@ -142,7 +139,7 @@ type Config struct {
 	Quiet bool
 }
 
-func run(cfg Config) error {
+func Run(cfg Config) error {
 	if cfg.Trials > 1 || cfg.Quiet {
 		slog.SetDefault(slog.New(slog.DiscardHandler))
 	}
@@ -154,7 +151,7 @@ func run(cfg Config) error {
 		names[i] = name
 		switch name {
 		case "test":
-			strats[i] = &testStrategy{}
+			strats[i] = &PassLineStrategy{}
 		default:
 			return fmt.Errorf("unknown strategy: %s", name)
 		}
@@ -201,17 +198,17 @@ func run(cfg Config) error {
 				for {
 					shooter := Shooter{
 						ID:       uint(idx),
-						log:      slog.With("trial", trialIdx, "shooter", idx),
-						strategy: strat,
-						roller:   roller,
-						bankroll: finalBank,
+						Log:      slog.With("trial", trialIdx, "shooter", idx),
+						Strategy: strat,
+						Roller:   roller,
+						Bankroll: finalBank,
 					}
 					if err := shooter.Run(); err != nil {
-						finalBank = shooter.bankroll
+						finalBank = shooter.Bankroll
 						break
 					}
-					totalRolls += int(shooter.stats.Rolls)
-					finalBank = shooter.bankroll
+					totalRolls += int(shooter.Stats.Rolls)
+					finalBank = shooter.Bankroll
 					if totalRolls >= cfg.Rolls {
 						break
 					}
@@ -239,27 +236,4 @@ func run(cfg Config) error {
 		return fmt.Errorf("error writing output: %w", err)
 	}
 	return nil
-}
-
-func main() {
-	var cfg Config
-	cmd := &cobra.Command{
-		Use:   "craps",
-		Short: "Run craps experiments",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cfg)
-		},
-	}
-	cmd.Flags().IntVar(&cfg.Trials, "trials", 1, "number of trials to run for each strategy")
-	cmd.Flags().Float64Var(&cfg.Bankroll, "bankroll", 440, "starting bankroll for shooters")
-	cmd.Flags().Int64Var(&cfg.Seed, "seed", 9671111, "base seed; trial seeds will be seed+trial")
-	cmd.Flags().StringSliceVar(&cfg.StrategyNames, "strategies", []string{"test"}, "comma-separated list of strategies to test")
-	cmd.Flags().IntVar(&cfg.Rolls, "rolls", DEFAULT_ROLLS, "maximum number of rolls per trial (trial stops after this many rolls once the shooter sevens out)")
-	cmd.Flags().StringVar(&cfg.Out, "out", "", "output CSV file path (default stdout)")
-	cmd.Flags().BoolVar(&cfg.Quiet, "quiet", false, "suppress logging output")
-
-	if err := cmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
 }

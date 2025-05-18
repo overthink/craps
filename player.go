@@ -1,4 +1,4 @@
-package main
+package craps
 
 // PlayerStats holds per-player win/loss statistics.
 type PlayerStats struct {
