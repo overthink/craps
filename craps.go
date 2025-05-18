@@ -12,8 +12,8 @@ import (
 	"log/slog"
 )
 
-// DEFAULT_ROLLS is the default maximum number of rolls per trial.
-// A trial ends once this many rolls have been seen at the end of the current shooter.
+// DEFAULT_ROLLS is the default maximum number of rolls per trial.  A trial ends
+// once this many rolls have been seen at the end of the current shooter.
 const DEFAULT_ROLLS = 1000
 
 type Strategy interface {
