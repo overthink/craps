@@ -144,7 +144,7 @@ type Config struct {
 
 func run(cfg Config) error {
 	if cfg.Trials > 1 || cfg.Quiet {
-		slog.SetDefault(slog.New(slog.NewTextHandler(io.Discard, &slog.HandlerOptions{})))
+		slog.SetDefault(slog.New(slog.DiscardHandler))
 	}
 
 	names := cfg.StrategyNames
