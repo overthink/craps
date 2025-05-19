@@ -18,8 +18,8 @@ type PlayerStats struct {
 type Player struct {
 	ID       int
 	Bankroll float64
-	strategy Strategy
-	bets     []Bet
+	Strategy Strategy
+	Bets     []Bet
 	Stats    PlayerStats
 }
 
@@ -32,7 +32,7 @@ func (p *Player) LogValue() slog.Value {
 
 // NewPlayer creates a new Player with the given id, bankroll, and strategy.
 func NewPlayer(id int, bank float64, start Strategy) *Player {
-	p := &Player{ID: id, Bankroll: bank, strategy: start}
+	p := &Player{ID: id, Bankroll: bank, Strategy: start}
 	p.Stats.BankrollMax = bank
 	p.Stats.BankrollMin = bank
 
@@ -43,19 +43,23 @@ func NewPlayer(id int, bank float64, start Strategy) *Player {
 // the given roll and game state.
 func (p *Player) settleBets(roll DiceRoll, g *Game) {
 	var remaining []Bet
+
 	betSettled := false
-	for _, bet := range p.bets {
+	for _, bet := range p.Bets {
 		bet.Update(roll, g)
 
 		switch bet.Status() {
 		case BetStatusWon:
 			betSettled = true
+
 			g.log.Info("bet won", "bet", bet)
 			p.Bankroll += bet.Pays() + bet.Amount()
 			p.Stats.WinCount++
 		case BetStatusLost:
 			betSettled = true
+
 			g.log.Info("bet lost", "bet", bet)
+
 			p.Stats.LossCount++
 		default:
 			g.log.Debug("bet not yet resolved", "bet", bet)
@@ -63,7 +67,7 @@ func (p *Player) settleBets(roll DiceRoll, g *Game) {
 		}
 	}
 
-	p.bets = remaining
+	p.Bets = remaining
 	if p.Bankroll > p.Stats.BankrollMax {
 		p.Stats.BankrollMax = p.Bankroll
 	}
@@ -71,6 +75,7 @@ func (p *Player) settleBets(roll DiceRoll, g *Game) {
 	if p.Bankroll < p.Stats.BankrollMin {
 		p.Stats.BankrollMin = p.Bankroll
 	}
+
 	if betSettled {
 		g.log.Info("bets settled", "player", p)
 	}

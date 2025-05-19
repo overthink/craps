@@ -1,27 +1,24 @@
 package craps
 
-import "errors"
-
 type PassLineStrategy struct{}
 
 func (s *PassLineStrategy) Name() string {
 	return "passline"
 }
 
-func (s *PassLineStrategy) PlaceBets(p *Player, g *Game) error {
+func (s *PassLineStrategy) PlaceBets(g *Game, p *Player) {
 	if p.Bankroll < 5 {
-		return errors.New("not enough money")
+		return
 	}
 
 	if !g.IsComeOut() {
-		return nil
+		return
 	}
 
 	bet := NewPassLineBet(5)
-	p.bets = append(p.bets, bet)
+	p.Bets = append(p.Bets, bet)
 	p.Bankroll -= 5
 	p.Stats.TotalWagered += 5
 	p.Stats.BetCount++
 	g.log.Info("bet placed", "bet", bet, "player", p)
-	return nil
 }

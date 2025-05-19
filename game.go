@@ -48,14 +48,20 @@ func (g *Game) reset() {
 // Run executes the game until the player busts or the maximum rolls are reached.
 // It loops through shooters until a terminal condition is met.
 func (g *Game) Run(player *Player, maxRolls int) error {
+	if maxRolls <= 0 {
+		// Technically we could just roll till the player busts, but strategies
+		// aren't guarnateed to reduce bankroll to exactly zero, so we always
+		// require maxRolls.
+		return errors.New("max rolls must be positive")
+	}
 ComeOutLoop:
 	for {
-		for _, bet := range player.bets {
-			// TODO: real case? Do we have to take back non-working bets here?
-			g.log.Info("unsettled working bets", "bet", bet)
+		// sanity check
+		if len(player.Bets) > 0 {
+			g.log.Info("bets found at game start", "bets", player.Bets)
 			return errors.New("unsettled bets found at game start")
 		}
-		if maxRolls > 0 && g.Stats.RollCount >= uint(maxRolls) {
+		if g.Stats.RollCount >= uint(maxRolls) {
 			g.log.Info("max rolls reached", "rolls", g.Stats.RollCount, "player", player)
 			break ComeOutLoop
 		}
@@ -64,9 +70,7 @@ ComeOutLoop:
 		g.log.Info("---- come out", "player", player)
 		g.reset()
 		g.Stats.RoundCount++
-		if err := player.strategy.PlaceBets(player, g); err != nil {
-			return err
-		}
+		player.Strategy.PlaceBets(g, player)
 		roll := g.rollDice()
 		player.settleBets(roll, g)
 		if roll.IsPoint() {
@@ -87,9 +91,7 @@ ComeOutLoop:
 		// trying to hit point
 	PointLoop:
 		for {
-			if err := player.strategy.PlaceBets(player, g); err != nil {
-				return err
-			}
+			player.Strategy.PlaceBets(g, player)
 			roll := g.rollDice()
 			player.settleBets(roll, g)
 			if roll.Value == g.point {
