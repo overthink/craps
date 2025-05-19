@@ -129,6 +129,90 @@
         }
       }
     },
+    "just@latest": {
+      "last_modified": "2025-05-06T08:06:31Z",
+      "resolved": "github:NixOS/nixpkgs/1cb1c02a6b1b7cf67e3d7731cbbf327a53da9679#just",
+      "source": "devbox-search",
+      "version": "1.40.0",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/2962ca92j2cd3xczq9nlka01vpywbn4d-just-1.40.0",
+              "default": true
+            },
+            {
+              "name": "man",
+              "path": "/nix/store/h04dsg7zl4f26sairdzsqgqmy75gy1pw-just-1.40.0-man",
+              "default": true
+            },
+            {
+              "name": "doc",
+              "path": "/nix/store/vski9kzna45sznszx4mp1rf1gbk30gvc-just-1.40.0-doc"
+            }
+          ],
+          "store_path": "/nix/store/2962ca92j2cd3xczq9nlka01vpywbn4d-just-1.40.0"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/n62virikn17adjxrmmza7y8dbz248f1q-just-1.40.0",
+              "default": true
+            },
+            {
+              "name": "man",
+              "path": "/nix/store/4rc49ixdgw0bxvs3zvmcf3qb0mvys9s4-just-1.40.0-man",
+              "default": true
+            },
+            {
+              "name": "doc",
+              "path": "/nix/store/vzyrm43p3bmn3nv46pxzk20vrpc7qjrf-just-1.40.0-doc"
+            }
+          ],
+          "store_path": "/nix/store/n62virikn17adjxrmmza7y8dbz248f1q-just-1.40.0"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/435q9gysb62lz321952p7y7lbjw4mwgy-just-1.40.0",
+              "default": true
+            },
+            {
+              "name": "man",
+              "path": "/nix/store/fcc2g4lgi7z773azhqgsz42q4lzms61x-just-1.40.0-man",
+              "default": true
+            },
+            {
+              "name": "doc",
+              "path": "/nix/store/26nxx8kdsq7qm7h0p11hfdzvhjl5ncjs-just-1.40.0-doc"
+            }
+          ],
+          "store_path": "/nix/store/435q9gysb62lz321952p7y7lbjw4mwgy-just-1.40.0"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/gykaky8lj8gz4akpwpq2iypjf57yyzjg-just-1.40.0",
+              "default": true
+            },
+            {
+              "name": "man",
+              "path": "/nix/store/94hmi52j1sw2c9pgi98smisznhfzarzx-just-1.40.0-man",
+              "default": true
+            },
+            {
+              "name": "doc",
+              "path": "/nix/store/6w4fqrh33sfvvyjwygs24kw413vfrqrp-just-1.40.0-doc"
+            }
+          ],
+          "store_path": "/nix/store/gykaky8lj8gz4akpwpq2iypjf57yyzjg-just-1.40.0"
+        }
+      }
+    },
     "nodejs@latest": {
       "last_modified": "2025-05-12T14:38:58Z",
       "plugin_version": "0.0.2",

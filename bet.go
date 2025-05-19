@@ -12,6 +12,7 @@ func NewOdds(win, loss uint) Odds {
 		// It's annoying to propagate an error here, and it's a programmer error anyway
 		panic("odds loss number must be positive")
 	}
+
 	return Odds{
 		Win:  win,
 		Loss: loss,
@@ -99,9 +100,11 @@ func (pl *PassLineBet) Update(roll DiceRoll, _ *Game) {
 		if roll.Value == pl.point {
 			pl.status = BetStatusWon
 		}
+
 		if roll.Value == 7 {
 			pl.status = BetStatusLost
 		}
+
 		return
 	}
 	// Come-out roll: check pass or craps outcomes
@@ -109,6 +112,7 @@ func (pl *PassLineBet) Update(roll DiceRoll, _ *Game) {
 		pl.status = BetStatusWon
 		return
 	}
+
 	if roll.IsCraps() {
 		pl.status = BetStatusLost
 		return

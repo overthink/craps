@@ -12,7 +12,7 @@ type PlayerStats struct {
 
 // Player represents the person betting at the table.
 type Player struct {
-	ID       uint
+	ID       int
 	Bankroll float64
 	strategy Strategy
 	bets     []Bet
@@ -20,10 +20,11 @@ type Player struct {
 }
 
 // NewPlayer creates a new Player with the given id, bankroll, and strategy.
-func NewPlayer(id uint, bank float64, strat Strategy) *Player {
-	p := &Player{ID: id, Bankroll: bank, strategy: strat}
+func NewPlayer(id int, bank float64, start Strategy) *Player {
+	p := &Player{ID: id, Bankroll: bank, strategy: start}
 	p.Stats.BankrollMax = bank
 	p.Stats.BankrollMin = bank
+
 	return p
 }
 
@@ -32,6 +33,7 @@ func (p *Player) settleBets(roll DiceRoll, g *Game) {
 	var remaining []Bet
 	for _, bet := range p.bets {
 		bet.Update(roll, g)
+
 		switch bet.Status() {
 		case BetStatusWon:
 			p.Bankroll += bet.Return()
@@ -42,10 +44,12 @@ func (p *Player) settleBets(roll DiceRoll, g *Game) {
 			remaining = append(remaining, bet)
 		}
 	}
+
 	p.bets = remaining
 	if p.Bankroll > p.Stats.BankrollMax {
 		p.Stats.BankrollMax = p.Bankroll
 	}
+
 	if p.Bankroll < p.Stats.BankrollMin {
 		p.Stats.BankrollMin = p.Bankroll
 	}

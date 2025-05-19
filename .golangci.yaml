@@ -1,0 +1,164 @@
+version: '2'
+
+run:
+  tests: true
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  settings:
+    gofumpt:
+      extra-rules: true
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+
+issues:
+  max-same-issues: 0
+  max-issues-per-linter: 0
+  fix: true
+
+linters:
+  default: none
+  enable:
+    - asciicheck # Checks that all code identifiers does not have non-ASCII symbols in the name.
+    - bidichk # Checks for dangerous unicode character sequences.
+    - bodyclose # Checks whether HTTP response body is closed successfully.
+    - containedctx # Containedctx is a linter that detects struct contained context.Context field.
+    - decorder # Check declaration order and count of types, constants, variables and functions.
+    - dogsled # Checks assignments with too many blank identifiers.
+    - errcheck # a program for checking for unchecked errors in Go code.
+    - exptostd # Detects functions from golang.org/x/exp/ that can be replaced by std functions.
+    - forbidigo # Forbids identifiers.
+    - forcetypeassert # Finds forced type assertions.
+    - gochecknoinits # Checks that no init functions are present in Go code.
+    - gocritic # Provides diagnostics that check for bugs, performance and style issues.
+    - gomodguard # Allow and block list linter for direct Go module dependencies.
+    - goprintffuncname # Checks that printf-like functions are named with f at the end.
+    - gosec # Inspects source code for security problems.
+    - govet # Examines Go source code and reports suspicious constructs.
+    - grouper # Analyze expression groups.
+    - iface # Detect the incorrect use of interfaces, helping developers avoid interface pollution.
+    - importas # Enforces consistent import aliases
+    - ineffassign # Detects when assignments to existing variables are not used.
+    - intrange # Find places where for loops could make use of an integer range.
+    - loggercheck # Checks key value pairs for common logger libraries.
+    - makezero # Finds slice declarations with non-zero initial length.
+    - mirror # Reports wrong mirror patterns of bytes/strings usage.
+    - misspell # Finds commonly misspelled English words.
+    - nakedret # Checks that functions with naked returns are not longer than a maximum size (can be zero).
+    - nilerr # Finds the code that returns nil even if it checks that the error is not nil.
+    - noctx # Finds sending http request without context.Context.
+    - nolintlint # Reports ill-formed or insufficient nolint directives.
+    - nosprintfhostport # Checks for misuse of Sprintf to construct a host with port in a URL.
+    - paralleltest # Detects missing usage of t.Parallel() method in your Go test.
+    - perfsprint # Checks that fmt.Sprintf can be replaced with a faster alternative.
+    - prealloc # Finds slice declarations that could potentially be pre-allocated.
+    - predeclared # Find code that shadows one of Go's predeclared identifiers.
+    - promlinter # Check Prometheus metrics naming via promlint.
+    - reassign # Checks that package variables are not reassigned.
+    - rowserrcheck # Checks whether Rows.Err of rows is checked successfully.
+    - sloglint # Ensure consistent code style when using log/slog.
+    - sqlclosecheck # Checks that sql.Rows, sql.Stmt, sqlx.NamedStmt, pgx.Query are closed.
+    - staticcheck # It's the set of rules from staticcheck.
+    - tagalign # Check that struct tags are well aligned.
+    - tagliatelle # Checks the struct tags.
+    - testifylint # Checks usage of github.com/stretchr/testify.
+    - unconvert # Remove unnecessary type conversions.
+    - unused # Checks Go code for unused constants, variables, functions and types.
+    - usestdlibvars # Detect the possibility to use variables/constants from the Go standard library.
+    - wastedassign # Finds wasted assignment statements.
+    - whitespace # Whitespace is a linter that checks for unnecessary newlines at the start and end of functions, if, for, etc
+    - wsl # Add or remove empty lines.
+
+  settings:
+    gocritic:
+      disable-all: true
+      enabled-checks:
+        - appendAssign
+        - appendCombine
+        - argOrder
+        - assignOp
+        - badCall
+        - badCond
+        - boolExprSimplify
+        - builtinShadow
+        - captLocal
+        - caseOrder
+        - codegenComment
+        - commentFormatting
+        - commentedOutCode
+        - defaultCaseOrder
+        - deferInLoop
+        - deferUnlambda
+        - deprecatedComment
+        - dupArg
+        - dupBranchBody
+        - dupCase
+        - dupSubExpr
+        - elseif
+        - emptyFallthrough
+        - exitAfterDefer
+        - exposedSyncMutex
+        - filepathJoin
+        - flagDeref
+        - flagName
+        - ifElseChain
+        - mapKey
+        - nestingReduce
+        - newDeref
+        - offBy1
+        - preferFilepathJoin
+        - redundantSprint
+        - regexpMust
+        - singleCaseSwitch
+        - sloppyLen
+        - sloppyTypeAssert
+        - switchTrue
+        - todoCommentWithoutDetail
+        - tooManyResultsChecker
+        - typeDefFirst
+        - typeSwitchVar
+        - typeUnparen
+        - underef
+        - unlambda
+        - unslice
+        - valSwap
+        - whyNoLint
+        - wrapperFunc
+        - yodaStyleExpr
+    wsl:
+      allow-cuddle-used-in-block: true
+      allow-cuddle-declarations: true
+    tagliatelle:
+      case:
+        rules:
+          json: camel
+          yaml: camel
+          xml: camel
+          toml: camel
+          bson: camel
+          query: camel
+
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: cloud-run/redirect/handler_test.go
+        linters: ['checknoinits']
+      - path: interviews/exfiltration
+        linters: ['gosec']
+      - path: bazaarjob/neighborhood.go
+        linters: ['gochecknoinits']
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

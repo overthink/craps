@@ -10,6 +10,7 @@ const delta = 0.005
 
 func TestBaseBet(t *testing.T) {
 	t.Parallel()
+
 	tests := []struct {
 		amount  float64
 		win     uint
@@ -68,6 +69,8 @@ func TestBaseBet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run("", func(t *testing.T) {
+			t.Parallel()
+
 			if tt.isError {
 				require.Panics(t, func() {
 					_ = BaseBet{
@@ -75,8 +78,10 @@ func TestBaseBet(t *testing.T) {
 						odds:   NewOdds(tt.win, tt.loss),
 					}
 				})
+
 				return
 			}
+
 			b := BaseBet{
 				amount: tt.amount,
 				odds:   NewOdds(tt.win, tt.loss),

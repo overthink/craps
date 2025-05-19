@@ -4,12 +4,11 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"os"
 	"runtime"
 	"strings"
-
-	"log/slog"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -30,21 +29,28 @@ func (s *PassLineStrategy) PlaceBets(p *Player, g *Game) error {
 	if p.Bankroll < 5 {
 		return errors.New("not enough money")
 	}
+
 	if !g.IsComeOut() {
 		return nil
 	}
+
 	p.bets = append(p.bets, NewPassLineBet(5))
 	p.Bankroll -= 5
 	p.Stats.TotalWagered += 5
 	p.Stats.BetCount++
+
 	return nil
 }
 
 func NewRoller(seed int64) Roller {
+	//nolint:gosec // non-crypto generator is fine for our simulation
 	r := rand.New(rand.NewSource(seed))
+
 	return func() DiceRoll {
 		a := r.Intn(6) + 1
 		b := r.Intn(6) + 1
+
+		//nolint:gosec // a an b are both in [1, 6] so there's not overflow risk for this cast
 		return DiceRoll{Value: uint(a + b), Hard: a == b}
 	}
 }
@@ -72,9 +78,11 @@ func Run(cfg Config) error {
 
 	names := cfg.StrategyNames
 	strats := make([]Strategy, len(names))
+
 	for i, name := range names {
 		name = strings.TrimSpace(name)
 		names[i] = name
+
 		switch name {
 		case "test":
 			strats[i] = &PassLineStrategy{}
@@ -90,18 +98,21 @@ func Run(cfg Config) error {
 	for trialIdx := range cfg.Trials {
 		eg.Go(func() error {
 			trialSeed := cfg.Seed + int64(trialIdx)
-			for idx, strat := range strats {
+			for idx, start := range strats {
 				log := slog.With("trial", trialIdx, "strategy", names[idx])
 				roller := NewRoller(trialSeed)
 				game := NewGame(log, roller)
-				player := NewPlayer(uint(idx), cfg.Bankroll, strat)
+				player := NewPlayer(idx, cfg.Bankroll, start)
+
 				if err := game.Run(player, cfg.Rolls); err != nil {
 					return fmt.Errorf("failed to run game: %w", err)
 				}
+
 				net := player.Bankroll - cfg.Bankroll
 				resultIdx := trialIdx*len(strats) + idx
 				results[resultIdx] = result{strategy: names[idx], profit: net}
 			}
+
 			return nil
 		})
 	}
@@ -110,21 +121,26 @@ func Run(cfg Config) error {
 	if err != nil {
 		return fmt.Errorf("error running trials: %w", err)
 	}
+
 	if err := writeResults(cfg, results); err != nil {
 		return fmt.Errorf("failed to write results: %w", err)
 	}
+
 	return nil
 }
 
 func writeResults(config Config, results []result) error {
 	var writer *csv.Writer
+
 	var f *os.File
 	if config.Out != "" {
 		var err error
+
 		f, err = os.Create(config.Out)
 		if err != nil {
 			return fmt.Errorf("failed to create output file: %w", err)
 		}
+
 		defer f.Close()
 		writer = csv.NewWriter(f)
 	} else {
@@ -134,6 +150,7 @@ func writeResults(config Config, results []result) error {
 	if err := writer.Write([]string{"strategy", "net_profit"}); err != nil {
 		return fmt.Errorf("failed to write header: %w", err)
 	}
+
 	for _, result := range results {
 		if err := writer.Write([]string{result.strategy, fmt.Sprintf("%.2f", result.profit)}); err != nil {
 			return fmt.Errorf("failed to write record: %w", err)
@@ -141,8 +158,10 @@ func writeResults(config Config, results []result) error {
 	}
 
 	writer.Flush()
+
 	if err := writer.Error(); err != nil {
 		return fmt.Errorf("error writing output: %w", err)
 	}
+
 	return nil
 }

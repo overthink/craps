@@ -5,7 +5,8 @@
     "gopls@latest",
     "golangci-lint@latest",
     "pnpm@latest",
-    "nodejs@latest"
+    "nodejs@latest",
+    "just@latest"
   ],
   "shell": {
     "scripts": {

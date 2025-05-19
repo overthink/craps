@@ -32,7 +32,9 @@ func (g *Game) IsComeOut() bool {
 func (g *Game) rollDice() DiceRoll {
 	roll := g.roller()
 	g.log.Info("rolled", "value", roll.Value, "hard", roll.Hard)
+
 	g.Stats.RollCount++
+
 	return roll
 }
 
@@ -45,7 +47,7 @@ func (g *Game) reset() {
 func (g *Game) Run(p *Player, maxRolls int) error {
 ComeOutLoop:
 	for {
-		if maxRolls > 0 && int(g.Stats.RollCount) >= maxRolls {
+		if maxRolls > 0 && g.Stats.RollCount >= uint(maxRolls) {
 			g.log.Info("max rolls reached", "rolls", g.Stats.RollCount)
 			break ComeOutLoop
 		}
@@ -91,5 +93,6 @@ ComeOutLoop:
 			p.settleBets(roll, g)
 		}
 	}
+
 	return nil
 }
