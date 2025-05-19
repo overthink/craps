@@ -47,7 +47,10 @@ type Bet interface {
 	// + 10 (original wager) == 25 back.
 	Return() float64
 
-	Update(roll DiceRoll, s *Shooter)
+	// Amount returns the amount wagered on the bet.
+	Amount() float64
+	// Update processes the given roll against the game state.
+	Update(roll DiceRoll, g *Game)
 }
 
 type BaseBet struct {
@@ -69,6 +72,11 @@ func (b *BaseBet) Return() float64 {
 	return b.amount + (float64(b.odds.Win) / float64(b.odds.Loss) * b.amount)
 }
 
+// Amount returns the wagered amount of the base bet.
+func (b *BaseBet) Amount() float64 {
+	return b.amount
+}
+
 type PassLineBet struct {
 	BaseBet
 	// We store the point vs relying on the game state so this type can be used for come bets as well
@@ -85,8 +93,8 @@ func NewPassLineBet(amount float64) *PassLineBet {
 	}
 }
 
-func (pl *PassLineBet) Update(roll DiceRoll, s *Shooter) {
-	// If we have a point, check if we hit it
+func (pl *PassLineBet) Update(roll DiceRoll, _ *Game) {
+	// If the bet has its own point, check win/loss conditions
 	if pl.point > 0 {
 		if roll.Value == pl.point {
 			pl.status = BetStatusWon
@@ -96,7 +104,7 @@ func (pl *PassLineBet) Update(roll DiceRoll, s *Shooter) {
 		}
 		return
 	}
-	// If we don't already have a point, check if we won, lost, or set a point
+	// Come-out roll: check pass or craps outcomes
 	if roll.IsPass() {
 		pl.status = BetStatusWon
 		return
@@ -105,6 +113,6 @@ func (pl *PassLineBet) Update(roll DiceRoll, s *Shooter) {
 		pl.status = BetStatusLost
 		return
 	}
-	// If we got here we set the point
+	// Otherwise set point for the bet
 	pl.point = roll.Value
 }
