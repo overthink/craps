@@ -20,10 +20,15 @@ const DEFAULT_ROLLS = 2 * 60 * 2
 
 // Strategy defines the betting logic for a player during a game.
 type Strategy interface {
+	Name() string
 	PlaceBets(p *Player, g *Game) error
 }
 
 type PassLineStrategy struct{}
+
+func (s *PassLineStrategy) Name() string {
+	return "passline"
+}
 
 func (s *PassLineStrategy) PlaceBets(p *Player, g *Game) error {
 	if p.Bankroll < 5 {
@@ -76,15 +81,12 @@ func Run(cfg Config) error {
 		slog.SetDefault(slog.New(slog.DiscardHandler))
 	}
 
-	names := cfg.StrategyNames
-	strats := make([]Strategy, len(names))
+	strats := make([]Strategy, len(cfg.StrategyNames))
 
-	for i, name := range names {
+	for i, name := range cfg.StrategyNames {
 		name = strings.TrimSpace(name)
-		names[i] = name
-
 		switch name {
-		case "test":
+		case "passline":
 			strats[i] = &PassLineStrategy{}
 		default:
 			return fmt.Errorf("unknown strategy: %s", name)
@@ -98,19 +100,19 @@ func Run(cfg Config) error {
 	for trialIdx := range cfg.Trials {
 		eg.Go(func() error {
 			trialSeed := cfg.Seed + int64(trialIdx)
-			for idx, start := range strats {
-				log := slog.With("trial", trialIdx, "strategy", names[idx])
+			for stratIdx, start := range strats {
+				log := slog.With("trial", trialIdx, "strategy", start.Name())
 				roller := NewRoller(trialSeed)
 				game := NewGame(log, roller)
-				player := NewPlayer(idx, cfg.Bankroll, start)
+				player := NewPlayer(stratIdx, cfg.Bankroll, start)
 
 				if err := game.Run(player, cfg.Rolls); err != nil {
 					return fmt.Errorf("failed to run game: %w", err)
 				}
 
 				net := player.Bankroll - cfg.Bankroll
-				resultIdx := trialIdx*len(strats) + idx
-				results[resultIdx] = result{strategy: names[idx], profit: net}
+				resultIdx := trialIdx*len(strats) + stratIdx
+				results[resultIdx] = result{strategy: start.Name(), profit: net}
 			}
 
 			return nil

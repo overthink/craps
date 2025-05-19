@@ -49,6 +49,9 @@ ComeOutLoop:
 	for {
 		if maxRolls > 0 && g.Stats.RollCount >= uint(maxRolls) {
 			g.log.Info("max rolls reached", "rolls", g.Stats.RollCount)
+			for _, bet := range p.bets {
+				g.log.Info("xxxx bet unsettled!", "bet", bet)
+			}
 			break ComeOutLoop
 		}
 		// come-out roll
