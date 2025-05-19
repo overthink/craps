@@ -16,7 +16,8 @@ import (
 
 // DEFAULT_ROLLS is the default maximum number of rolls per trial. A trial ends
 // once this many rolls have been seen at the end of the current shooter.
-const DEFAULT_ROLLS = 1000
+// Let's say 2 rolls per minute and a two hour session by default.
+const DEFAULT_ROLLS = 2 * 60 * 2
 
 // Strategy defines the betting logic for a player during a game.
 type Strategy interface {
@@ -54,9 +55,9 @@ type Config struct {
 	Seed          int64
 	StrategyNames []string
 	// Rolls is the maximum number of rolls per trial.
-	Rolls int
-	Out   string
-	Quiet bool
+	Rolls   int
+	Out     string
+	Verbose bool
 }
 
 type result struct {
@@ -65,7 +66,7 @@ type result struct {
 }
 
 func Run(cfg Config) error {
-	if cfg.Trials > 1 || cfg.Quiet {
+	if !cfg.Verbose {
 		slog.SetDefault(slog.New(slog.DiscardHandler))
 	}
 
@@ -90,8 +91,9 @@ func Run(cfg Config) error {
 		eg.Go(func() error {
 			trialSeed := cfg.Seed + int64(trialIdx)
 			for idx, strat := range strats {
+				log := slog.With("trial", trialIdx, "strategy", names[idx])
 				roller := NewRoller(trialSeed)
-				game := NewGame(roller)
+				game := NewGame(log, roller)
 				player := NewPlayer(uint(idx), cfg.Bankroll, strat)
 				if err := game.Run(player, cfg.Rolls); err != nil {
 					return fmt.Errorf("failed to run game: %w", err)

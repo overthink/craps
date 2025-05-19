@@ -10,7 +10,7 @@
   "shell": {
     "scripts": {
       "codex": [
-        "OPENAI_API_KEY=$(<~/.codex-api-key) codex"
+        "OPENAI_API_KEY=$(<~/.codex-api-key) codex --notify"
       ]
     }
   }
