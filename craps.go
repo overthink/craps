@@ -97,7 +97,8 @@ func Run(cfg Config) error {
 					return fmt.Errorf("failed to run game: %w", err)
 				}
 				net := player.Bankroll - cfg.Bankroll
-				results[trialIdx] = result{strategy: names[idx], profit: net}
+				resultIdx := trialIdx*len(strats) + idx
+				results[resultIdx] = result{strategy: names[idx], profit: net}
 			}
 			return nil
 		})
