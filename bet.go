@@ -43,6 +43,16 @@ type Bet interface {
 	Status() BetStatus
 	Type() BetType
 
+	// IsWorking returns true if the bet is live. e.g. a pass line bet is always
+	// working, but a place bet is (by default) only working if a point is set.
+	// Only has meaning if the bet is unresolved.
+	IsWorking() bool
+
+	// CanBeRemoved returns true if the bet can be picked up from the table.
+	// Some bets are locked in forever (e.g. pass line) but others can be
+	// removed (e.g. place bets). Only has meaning if the bet is unresolved.
+	CanBeRemoved() bool
+
 	// Return is the amount returned to the shooter if the bet is won, including
 	// the original wager. e.g. if you bet 10 on 3:2 odds, you get 15 (winnings)
 	// + 10 (original wager) == 25 back.
@@ -50,7 +60,9 @@ type Bet interface {
 
 	// Amount returns the amount wagered on the bet.
 	Amount() float64
-	// Update processes the given roll against the game state.
+
+	// Update gives the bet a chance to update its state based on the roll that
+	// just happened and the game state as it existed before the roll.
 	Update(roll DiceRoll, g *Game)
 }
 
@@ -69,6 +81,14 @@ func (b *BaseBet) Type() BetType {
 	return b.betType
 }
 
+func (b *BaseBet) IsWorking() bool {
+	return true
+}
+
+func (b *BaseBet) CanBeRemoved() bool {
+	return false
+}
+
 func (b *BaseBet) Return() float64 {
 	return b.amount + (float64(b.odds.Win) / float64(b.odds.Loss) * b.amount)
 }
@@ -80,8 +100,6 @@ func (b *BaseBet) Amount() float64 {
 
 type PassLineBet struct {
 	BaseBet
-	// We store the point vs relying on the game state so this type can be used for come bets as well
-	point uint
 }
 
 func NewPassLineBet(amount float64) *PassLineBet {
@@ -94,29 +112,27 @@ func NewPassLineBet(amount float64) *PassLineBet {
 	}
 }
 
-func (pl *PassLineBet) Update(roll DiceRoll, _ *Game) {
-	// If the bet has its own point, check win/loss conditions
-	if pl.point > 0 {
-		if roll.Value == pl.point {
+func (pl *PassLineBet) Update(roll DiceRoll, g *Game) {
+	if g.point == 0 {
+		// Come-out roll
+		if roll.IsPass() {
 			pl.status = BetStatusWon
+			return
 		}
 
-		if roll.Value == 7 {
+		if roll.IsCraps() {
 			pl.status = BetStatusLost
+			return
 		}
-
-		return
 	}
-	// Come-out roll: check pass or craps outcomes
-	if roll.IsPass() {
+	// Check for point
+	if roll.Value == g.point {
 		pl.status = BetStatusWon
-		return
 	}
 
-	if roll.IsCraps() {
+	if roll.Value == 7 {
 		pl.status = BetStatusLost
-		return
 	}
-	// Otherwise set point for the bet
-	pl.point = roll.Value
+
+	return
 }

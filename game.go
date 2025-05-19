@@ -62,6 +62,7 @@ ComeOutLoop:
 			return err
 		}
 		roll := g.rollDice()
+		p.settleBets(roll, g)
 		if roll.IsPoint() {
 			g.log.Info("point set", "value", roll.Value)
 			g.point = roll.Value
@@ -84,6 +85,7 @@ ComeOutLoop:
 				return err
 			}
 			roll := g.rollDice()
+			p.settleBets(roll, g)
 			if roll.Value == g.point {
 				g.log.Info("point hit", "value", roll.Value)
 				g.Stats.PassCount++
@@ -93,7 +95,6 @@ ComeOutLoop:
 				g.log.Info("seven out", "value", roll.Value)
 				break PointLoop
 			}
-			p.settleBets(roll, g)
 		}
 	}
 

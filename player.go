@@ -28,7 +28,8 @@ func NewPlayer(id int, bank float64, start Strategy) *Player {
 	return p
 }
 
-// settleBets updates the player's bankroll and stats based on bet outcomes for the given roll and game state.
+// settleBets updates the player's bankroll and stats based on bet outcomes for
+// the given roll and game state.
 func (p *Player) settleBets(roll DiceRoll, g *Game) {
 	var remaining []Bet
 	for _, bet := range p.bets {
