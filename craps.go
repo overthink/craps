@@ -76,19 +76,19 @@ func Run(cfg Config) error {
 	for trialIdx := range cfg.Trials {
 		eg.Go(func() error {
 			trialSeed := cfg.Seed + int64(trialIdx)
-			for stratIdx, start := range strats {
-				log := slog.With("trial", trialIdx, "strategy", start.Name())
+			for stratIdx, strat := range strats {
+				log := slog.With("trial", trialIdx, "seed", trialSeed, "strategy", strat.Name())
 				roller := NewRoller(trialSeed)
 				game := NewGame(log, roller)
-				player := NewPlayer(stratIdx, cfg.Bankroll, start)
 
+				player := NewPlayer(stratIdx, cfg.Bankroll, strat)
 				if err := game.Run(player, cfg.Rolls); err != nil {
 					return fmt.Errorf("failed to run game: %w", err)
 				}
 
 				net := player.Bankroll - cfg.Bankroll
 				resultIdx := trialIdx*len(strats) + stratIdx
-				results[resultIdx] = result{strategy: start.Name(), profit: net}
+				results[resultIdx] = result{strategy: strat.Name(), profit: net}
 			}
 
 			return nil

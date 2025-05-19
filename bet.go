@@ -1,5 +1,7 @@
 package craps
 
+import "log/slog"
+
 // Odds represents odds for a bet. The numbers are net / independent of amount
 // wagered.
 type Odds struct {
@@ -53,10 +55,11 @@ type Bet interface {
 	// removed (e.g. place bets). Only has meaning if the bet is unresolved.
 	CanBeRemoved() bool
 
-	// Return is the amount returned to the shooter if the bet is won, including
-	// the original wager. e.g. if you bet 10 on 3:2 odds, you get 15 (winnings)
-	// + 10 (original wager) == 25 back.
-	Return() float64
+	// Pays is the amount won, excluding the original wager. e.g. if you bet 10
+	// on 3:2 odds, the bet pays 15 (10*3/2). You also get your initial wager
+	// back, so technically you'll get 10+15==25 back, but we're only concerned
+	// with the winnings here.
+	Pays() float64
 
 	// Amount returns the amount wagered on the bet.
 	Amount() float64
@@ -71,6 +74,13 @@ type BaseBet struct {
 	odds    Odds
 	status  BetStatus
 	betType BetType
+}
+
+func (b *BaseBet) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Float64("amount", b.amount),
+		slog.Any("type", b.betType),
+	)
 }
 
 func (b *BaseBet) Status() BetStatus {
@@ -89,8 +99,8 @@ func (b *BaseBet) CanBeRemoved() bool {
 	return false
 }
 
-func (b *BaseBet) Return() float64 {
-	return b.amount + (float64(b.odds.Win) / float64(b.odds.Loss) * b.amount)
+func (b *BaseBet) Pays() float64 {
+	return float64(b.odds.Win) / float64(b.odds.Loss) * b.amount
 }
 
 // Amount returns the wagered amount of the base bet.
@@ -133,6 +143,4 @@ func (pl *PassLineBet) Update(roll DiceRoll, g *Game) {
 	if roll.Value == 7 {
 		pl.status = BetStatusLost
 	}
-
-	return
 }

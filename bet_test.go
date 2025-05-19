@@ -15,38 +15,38 @@ func TestBaseBet(t *testing.T) {
 		amount  float64
 		win     uint
 		loss    uint
-		payout  float64
+		pays    float64
 		isError bool
 	}{
 		{
 			amount: 10,
 			win:    3,
 			loss:   2,
-			payout: 25,
+			pays:   15,
 		},
 		{
 			amount: 10,
 			win:    2,
 			loss:   3,
-			payout: 16.67,
+			pays:   6.67,
 		},
 		{
 			amount: 0,
 			win:    3,
 			loss:   2,
-			payout: 0.0,
+			pays:   0.0,
 		},
 		{
 			amount: 12,
 			win:    5,
 			loss:   3,
-			payout: 32,
+			pays:   20,
 		},
 		{
 			amount: 12.50,
 			win:    5,
 			loss:   3,
-			payout: 33.33,
+			pays:   20.83,
 		},
 		{
 			amount:  1,
@@ -58,13 +58,13 @@ func TestBaseBet(t *testing.T) {
 			amount: 1,
 			win:    0,
 			loss:   1,
-			payout: 1,
+			pays:   0,
 		},
 		{
 			amount: 0,
 			win:    2,
 			loss:   1,
-			payout: 0,
+			pays:   0,
 		},
 	}
 	for _, tt := range tests {
@@ -86,7 +86,7 @@ func TestBaseBet(t *testing.T) {
 				amount: tt.amount,
 				odds:   NewOdds(tt.win, tt.loss),
 			}
-			require.InDelta(t, tt.payout, b.Return(), delta)
+			require.InDelta(t, tt.pays, b.Pays(), delta)
 		})
 	}
 }

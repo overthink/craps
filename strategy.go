@@ -17,10 +17,11 @@ func (s *PassLineStrategy) PlaceBets(p *Player, g *Game) error {
 		return nil
 	}
 
-	p.bets = append(p.bets, NewPassLineBet(5))
+	bet := NewPassLineBet(5)
+	p.bets = append(p.bets, bet)
 	p.Bankroll -= 5
 	p.Stats.TotalWagered += 5
 	p.Stats.BetCount++
-
+	g.log.Info("bet placed", "bet", bet, "player", p)
 	return nil
 }
