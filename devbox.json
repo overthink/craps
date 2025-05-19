@@ -6,10 +6,11 @@
     "golangci-lint@latest",
     "pnpm@latest",
     "nodejs@latest",
-    "just@latest"
+    "just@latest",
+    "sta@latest",
   ],
   "env": {
-    "JUST_UNSTABLE": "true",
-    "DEVBOX_COREPACK_ENABLED": "true"
+    "JUST_UNSTABLE":           "true",
+    "DEVBOX_COREPACK_ENABLED": "true",
   },
 }
