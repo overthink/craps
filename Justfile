@@ -7,3 +7,7 @@ build:
 
 test:
   go test ./...
+
+[script]
+codex:
+  OPENAI_API_KEY=$(<~/.codex-api-key) codex $@

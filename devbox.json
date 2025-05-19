@@ -8,11 +8,8 @@
     "nodejs@latest",
     "just@latest"
   ],
-  "shell": {
-    "scripts": {
-      "codex": [
-        "OPENAI_API_KEY=$(<~/.codex-api-key) codex --notify"
-      ]
-    }
-  }
+  "env": {
+    "JUST_UNSTABLE": "true",
+    "DEVBOX_COREPACK_ENABLED": "true"
+  },
 }
