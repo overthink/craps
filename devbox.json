@@ -4,13 +4,10 @@
     "go@1.24",
     "gopls@latest",
     "golangci-lint@latest",
-    "pnpm@latest",
-    "nodejs@latest",
     "just@latest",
     "sta@latest",
   ],
   "env": {
     "JUST_UNSTABLE":           "true",
-    "DEVBOX_COREPACK_ENABLED": "true",
   },
 }
