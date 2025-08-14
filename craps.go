@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"golang.org/x/sync/errgroup"
@@ -141,7 +142,7 @@ func writeResults(config Config, results []result) error {
 	for _, result := range results {
 		if err := writer.Write([]string{
 			result.strategy,
-			fmt.Sprintf("%d", result.rolls),
+			strconv.FormatUint(uint64(result.rolls), 10),
 			fmt.Sprintf("%.2f", result.profit),
 			fmt.Sprintf("%.2f", result.totalWagered),
 		}); err != nil {

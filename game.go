@@ -50,7 +50,7 @@ func (g *Game) reset() {
 func (g *Game) Run(player *Player, maxRolls int) error {
 	if maxRolls <= 0 {
 		// Technically we could just roll till the player busts, but strategies
-		// aren't guarnateed to reduce bankroll to exactly zero, so we always
+		// aren't guaranteed to reduce bankroll to exactly zero, so we always
 		// require maxRolls.
 		return errors.New("max rolls must be positive")
 	}
