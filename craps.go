@@ -13,12 +13,12 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// DEFAULT_ROLLS is the default maximum number of rolls per trial. A trial ends
-// once at least this many rolls have been seen at the end of the current
-// shooter.  Wizard of Odds says that the average number of rolls per hour is
-// ~102 for a full table. I'll adjust that up a bit for 2 rolls/min, and assume
-// an hour of play for the default.
-const DEFAULT_ROLLS = 120
+// ROLLS_PER_TRIAL is the (minimum) number of rolls per trial. A trial ends once
+// at least this many rolls have been seen at the end of the current shooter.
+// Wizard of Odds says that the average number of rolls per hour is ~102 for a
+// full table. I'll adjust that up a bit for 2 rolls/min, and assume an hour of
+// play for the default.
+const ROLLS_PER_TRIAL = 120
 
 // Strategy defines the betting logic for a player during a game.
 type Strategy interface {

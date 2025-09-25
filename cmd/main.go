@@ -21,7 +21,7 @@ func main() {
 	cmd.Flags().Float64Var(&cfg.Bankroll, "bankroll", 440, "starting bankroll for shooters")
 	cmd.Flags().Int64Var(&cfg.Seed, "seed", 655321, "base seed; trial seeds will be seed+trial")
 	cmd.Flags().StringSliceVar(&cfg.StrategyNames, "strategies", []string{"passline"}, "comma-separated list of strategies to test")
-	cmd.Flags().IntVar(&cfg.Rolls, "rolls", craps.DEFAULT_ROLLS, "maximum number of rolls per trial (trial stops after this many rolls once the shooter sevens out)")
+	cmd.Flags().IntVar(&cfg.Rolls, "rolls", craps.ROLLS_PER_TRIAL, "number of rolls per trial (trial stops when shooter sevens out after at least this many rolls)")
 	cmd.Flags().StringVar(&cfg.Out, "out", "", "output CSV file path (default stdout)")
 	cmd.Flags().BoolVar(&cfg.Verbose, "verbose", false, "enable logging output")
 
